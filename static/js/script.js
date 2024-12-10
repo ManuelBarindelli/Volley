@@ -1,5 +1,8 @@
 document.getElementById('giocaPartita').addEventListener('click', giocaPartita);
 
+// Definizione dei ruoli disponibili
+const ruoli = ["Palleggiatore", "Centrale", "Schiacciatore", "Libero", "Opposto"];
+
 // Nomi dei giocatori per la Squadra A
 const giocatoriA = [
     { nome: "Salvo Gabriele", ruolo: "Palleggiatore" },
@@ -24,6 +27,66 @@ const giocatoriB = [
     { nome: "Ricali Lorenzo", ruolo: "Schiacciatore" },
     { nome: "Jabir Ali", ruolo: "Libero" }
 ];
+
+// Funzione per visualizzare i giocatori di una squadra con checkbox per assenze
+function visualizzaGiocatori(idLista, giocatori) {
+    const lista = document.getElementById(idLista);
+    lista.innerHTML = ''; // Resetta la lista
+
+    giocatori.forEach((giocatore, index) => {
+        const li = document.createElement('li');
+        const label = document.createElement('label');
+        label.textContent = `${giocatore.nome} (${giocatore.ruolo})`;
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `${idLista}_assenza_${index}`;
+        checkbox.classList.add('assenza');
+
+        li.appendChild(label);
+        li.appendChild(checkbox);
+        lista.appendChild(li);
+    });
+}
+
+visualizzaGiocatori('giocatoriA', giocatoriA);
+visualizzaGiocatori('giocatoriB', giocatoriB);
+
+// Funzione per contare i giocatori assenti
+function contaAssenti(idLista) {
+    const checkboxes = document.querySelectorAll(`#${idLista} .assenza`);
+    let assenti = 0;
+    checkboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+            assenti++;
+        }
+    });
+    return assenti;
+}
+
+// Funzione per caricare lo storico delle partite dal localStorage
+function caricaStorico() {
+    const listaStorico = document.getElementById('storicoPartite');
+    listaStorico.innerHTML = '';
+    const storicoSalvato = JSON.parse(localStorage.getItem('storicoPartite')) || [];
+    storicoSalvato.forEach(partita => {
+        const li = document.createElement('li');
+        li.textContent = partita;
+        listaStorico.appendChild(li);
+    });
+}
+
+// Funzione per aggiornare lo storico delle partite e salvarlo nel localStorage
+function aggiornaStorico(partita) {
+    const storicoSalvato = JSON.parse(localStorage.getItem('storicoPartite')) || [];
+    storicoSalvato.push(partita);
+    localStorage.setItem('storicoPartite', JSON.stringify(storicoSalvato));
+
+    const listaStorico = document.getElementById('storicoPartite');
+    const li = document.createElement('li');
+    li.textContent = partita;
+    listaStorico.appendChild(li);
+}
 
 // Funzione per giocare la partita e calcolare il risultato
 function giocaPartita() {
@@ -63,58 +126,8 @@ function giocaPartita() {
     }
     document.getElementById('vincitore').textContent = vincitore;
 
-    // Raccogli i nomi dei giocatori attivi (non assenti)
-    const giocatoriAttiviA = giocatoriA.filter((giocatore, index) => !document.getElementById(`giocatoriA_assenza_${index}`).checked);
-    const giocatoriAttiviB = giocatoriB.filter((giocatore, index) => !document.getElementById(`giocatoriB_assenza_${index}`).checked);
-
-    const giocatoriAInfo = giocatoriAttiviA.map(g => g.nome).join(", ");
-    const giocatoriBInfo = giocatoriAttiviB.map(g => g.nome).join(", ");
-
-    // Chiamata al backend per salvare i risultati
-    fetch('/salva_risultato', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            data: dataPartita,
-            punteggioA: punteggioSquadraA,
-            punteggioB: punteggioSquadraB,
-            vincitore: vincitore,
-            giocatoriA: giocatoriAInfo,
-            giocatoriB: giocatoriBInfo
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
-            alert("Risultato salvato correttamente!");
-        } else {
-            alert("Errore nel salvataggio del risultato.");
-        }
-    })
-    .catch(error => {
-        console.error("Errore durante la richiesta:", error);
-        alert("Si è verificato un errore.");
-    });
-}
-
-// Funzione per caricare lo storico delle partite dal backend
-function caricaStorico() {
-    fetch('/storico')
-        .then(response => response.json())
-        .then(partite => {
-            const listaStorico = document.getElementById('storicoPartite');
-            listaStorico.innerHTML = '';
-            partite.forEach(partita => {
-                const li = document.createElement('li');
-                li.textContent = `Data: ${partita[1]} | Squadra A: ${partita[2]} - Squadra B: ${partita[3]} | Vincitore: ${partita[4]} | Giocatori A: ${partita[5]} | Giocatori B: ${partita[6]}`;
-                listaStorico.appendChild(li);
-            });
-        })
-        .catch(error => {
-            console.error("Errore nel caricamento dello storico:", error);
-        });
+    const risultatoPartita = `Data: ${dataPartita} | Squadra A: ${punteggioSquadraA} - Squadra B: ${punteggioSquadraB} | ${vincitore}`;
+    aggiornaStorico(risultatoPartita);
 }
 
 // Carica lo storico delle partite salvato quando la pagina viene caricata
