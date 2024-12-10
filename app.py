@@ -13,7 +13,9 @@ def init_db():
             data TEXT,
             punteggioA INTEGER,
             punteggioB INTEGER,
-            vincitore TEXT
+            vincitore TEXT,
+            giocatoriA TEXT,
+            giocatoriB TEXT
         )
     ''')
     conn.commit()
@@ -27,23 +29,40 @@ def index():
 # Rotta per salvare i risultati
 @app.route('/salva_risultato', methods=['POST'])
 def salva_risultato():
-    data = request.json
-    data_partita = data['data']
-    punteggioA = data['punteggioA']
-    punteggioB = data['punteggioB']
-    vincitore = data['vincitore']
+    data = request.json  # Prendi i dati come JSON
+    data_partita = data.get('data')
+    punteggioA = data.get('punteggioA')
+    punteggioB = data.get('punteggioB')
+    vincitore = data.get('vincitore')
+    giocatoriA = data.get('giocatoriA')
+    giocatoriB = data.get('giocatoriB')
+
+    # Verifica che tutti i dati siano presenti
+    if not all([data_partita, punteggioA, punteggioB, vincitore, giocatoriA, giocatoriB]):
+        return jsonify({'status': 'error', 'message': 'Dati incompleti'}), 400
 
     # Salva i risultati nel database
     conn = sqlite3.connect('finale.db')
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO partite (data, punteggioA, punteggioB, vincitore)
-        VALUES (?, ?, ?, ?)
-    ''', (data_partita, punteggioA, punteggioB, vincitore))
+        INSERT INTO partite (data, punteggioA, punteggioB, vincitore, giocatoriA, giocatoriB)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (data_partita, punteggioA, punteggioB, vincitore, giocatoriA, giocatoriB))
     conn.commit()
     conn.close()
 
-    return jsonify({'status': 'success'})
+    return jsonify({'status': 'success', 'message': 'Risultato salvato correttamente'})
+
+# Rotta per ottenere lo storico delle partite
+@app.route('/storico', methods=['GET'])
+def storico():
+    conn = sqlite3.connect('finale.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM partite ORDER BY id DESC')
+    partite = cursor.fetchall()
+    conn.close()
+
+    return jsonify(partite)
 
 # Avvia il server
 if __name__ == "__main__":
