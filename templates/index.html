@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partita Squadra A vs Squadra B</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Partita Squadra A vs Squadra B</h1>
+
+        <div class="squadra">
+            <h2>Squadra A</h2>
+            <ul id="giocatoriA"></ul>
+        </div>
+
+        <div class="squadra">
+            <h2>Squadra B</h2>
+            <ul id="giocatoriB"></ul>
+        </div>
+
+        <div class="input-container">
+            <label for="dataPartita">Data della Partita:</label>
+            <input type="date" id="dataPartita" required>
+        </div>
+
+        <div class="input-container">
+            <label for="punteggioAInput">Inserisci il punteggio per Squadra A:</label>
+            <input type="number" id="punteggioAInput">
+        </div>
+
+        <div class="input-container">
+            <label for="punteggioBInput">Inserisci il punteggio per Squadra B:</label>
+            <input type="number" id="punteggioBInput">
+        </div>
+
+        <button id="giocaPartita" class="btn">Visualizza Risultato</button>
+
+        <div id="risultato" class="risultato">
+            <h2>Risultato Finale</h2>
+            <p id="punteggioA"></p>
+            <p id="punteggioB"></p>
+            <p id="vincitore"></p>
+        </div>
+
+        <!-- Storico delle Partite -->
+        <div class="storico-container">
+            <h3>Storico delle Partite</h3>
+            <ul id="storicoPartite"></ul>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
