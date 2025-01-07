@@ -64,32 +64,44 @@ function contaAssenti(idLista) {
     return assenti;
 }
 
-// Funzione per caricare lo storico delle partite dal localStorage
-function caricaStorico() {
+// Funzione per caricare lo storico delle partite dal server
+async function caricaStorico() {
     const listaStorico = document.getElementById('storicoPartite');
     listaStorico.innerHTML = '';
-    const storicoSalvato = JSON.parse(localStorage.getItem('storicoPartite')) || [];
-    storicoSalvato.forEach(partita => {
-        const li = document.createElement('li');
-        li.textContent = partita;
-        listaStorico.appendChild(li);
-    });
+
+    try {
+        const response = await fetch('http://localhost:3000/partite');
+        const partite = await response.json();
+
+        partite.forEach(partita => {
+            const li = document.createElement('li');
+            li.textContent = `Data: ${partita.data} | Squadra A: ${partita.punteggioA} - Squadra B: ${partita.punteggioB} | ${partita.vincitore}`;
+            listaStorico.appendChild(li);
+        });
+    } catch (error) {
+        console.error('Errore nel caricamento dello storico:', error);
+    }
 }
 
-// Funzione per aggiornare lo storico delle partite e salvarlo nel localStorage
-function aggiornaStorico(partita) {
-    const storicoSalvato = JSON.parse(localStorage.getItem('storicoPartite')) || [];
-    storicoSalvato.push(partita);
-    localStorage.setItem('storicoPartite', JSON.stringify(storicoSalvato));
+// Funzione per inviare i dati della partita al server
+async function salvaPartita(partita) {
+    try {
+        const response = await fetch('http://localhost:3000/partite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(partita),
+        });
 
-    const listaStorico = document.getElementById('storicoPartite');
-    const li = document.createElement('li');
-    li.textContent = partita;
-    listaStorico.appendChild(li);
+        if (!response.ok) {
+            throw new Error('Errore durante il salvataggio della partita.');
+        }
+    } catch (error) {
+        console.error('Errore:', error);
+    }
 }
 
 // Funzione per giocare la partita e calcolare il risultato
-function giocaPartita() {
+async function giocaPartita() {
     const dataPartita = document.getElementById('dataPartita').value;
     let punteggioSquadraA = parseInt(document.getElementById('punteggioAInput').value);
     let punteggioSquadraB = parseInt(document.getElementById('punteggioBInput').value);
@@ -126,9 +138,17 @@ function giocaPartita() {
     }
     document.getElementById('vincitore').textContent = vincitore;
 
-    const risultatoPartita = `Data: ${dataPartita} | Squadra A: ${punteggioSquadraA} - Squadra B: ${punteggioSquadraB} | ${vincitore}`;
-    aggiornaStorico(risultatoPartita);
+    const partita = {
+        data: dataPartita,
+        punteggioA: punteggioSquadraA,
+        punteggioB: punteggioSquadraB,
+        vincitore: vincitore,
+    };
+
+    await salvaPartita(partita);
+    caricaStorico();
 }
 
 // Carica lo storico delle partite salvato quando la pagina viene caricata
 document.addEventListener('DOMContentLoaded', caricaStorico);
+
